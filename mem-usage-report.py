@@ -3,7 +3,7 @@ import click
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-base_url = 'https://{}.system.{}.{}.io'
+base_url = 'https://{}.system.{}'
 login_url = base_url.format("login","{}") + '/oauth/token'
 api_url = base_url.format("api","{}") + '{}'
 
@@ -52,7 +52,7 @@ def get_mem_report(header,foundation,skip,endpoint='/v2/apps'):
                 }
             r = s.get(apps_uri.format(endpoint), headers=header,params=params,verify=skip)
             apps_result = r.json()
-          # loop control
+            # loop control
             if (page_counter == apps_result['total_pages']):
                 run = False
             else:
@@ -76,19 +76,20 @@ def get_mem_report(header,foundation,skip,endpoint='/v2/apps'):
             if ('0' in app_detail_result.keys()):
                 for items in app_detail_result:
                     if app_detail_result[items]['state'] == "RUNNING":
-                        app_details.append(
-                                        {
-                                          "instance number" : items,
-                                          "app-name": app_detail_result[items]['stats']['name'],
-                                          "state"  : app_detail_result[items]['state'],
-                                          "mem-usage": app_detail_result[items]['stats']['usage']['mem']/1048576,
-                                          "mem-quota" : app_detail_result[items]['stats']['mem_quota']/1048576,
-                                          "percentage" : round(((app_detail_result[items]['stats']['usage']['mem'] /
-                                                           app_detail_result[items]['stats']['mem_quota'])*100),5)
-                              }
-                     )
+                     #    app_details.append(
+                     #                    {
+                     #                      "instance number" : items,
+                     #                      "app-name": app_detail_result[items]['stats']['name'],
+                     #                      "state"  : app_detail_result[items]['state'],
+                     #                      "mem-usage": app_detail_result[items]['stats']['usage']['mem']/1048576,
+                     #                      "mem-quota" : app_detail_result[items]['stats']['mem_quota']/1048576,
+                     #                      "percentage" : round(((app_detail_result[items]['stats']['usage']['mem'] /
+                     #                                       app_detail_result[items]['stats']['mem_quota'])*100),5)
+                     #          }
+                     # )
                         running_count = running_count + 1
                     elif app_detail_result[items]['state'] == "CRASHED":
+                        print(app_detail_result[items]['stats']['name'])
                         crashed_count = crashed_count + 1
                         # print("crashed: ", app_detail_uri)
                     else:
@@ -109,26 +110,26 @@ def get_mem_report(header,foundation,skip,endpoint='/v2/apps'):
                   '--foundation',
                   default='bumblebee',
                   help = 'target foundation'
-              )
+)
 @click.option(
                   '--skip-ssl-verification',
                   is_flag=True,
                   help = 'skip ssl verification'
-              )
+)
 @click.option(
                   "--user",
                   default="",
                   help="username"
-              )
+)
 @click.option(
                   "--password",
                   default="",
                   help="password"
-              )
+)
 def go(foundation,skip_ssl_verification,user,password):
-    tokens = get_auth(foundation,  skip_ssl_verification, user,password)
+    tokens = get_auth(foundation,  not skip_ssl_verification, user,password)
     auth_header = create_auth_header(tokens['access_token'])
-    get_mem_report(auth_header,foundation, skip_ssl_verification)
+    get_mem_report(auth_header,foundation, not skip_ssl_verification)
 
 if __name__ == '__main__':
     go()
